@@ -1,6 +1,5 @@
 #include "noise.h"
 #include "math.h"
-#include <iterator>
 
 #define MAX_COEFF (pow(2, 0.5))
 //#define DEBUG
