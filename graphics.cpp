@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
 
 #include "src/math.h"
 #include "src/vectors.h"
@@ -13,7 +14,7 @@
 using namespace std;
 
 // Dimensions of the image
-int2 dims = {3024, 1964};
+constexpr int2 dims = {3024, 1964};
 
 // DRAW STUFF
 void drawSquare(int2 corner, int2 size, int3 color, int* red, int* green, int* blue){
@@ -30,8 +31,8 @@ void drawSquareT(int2 center, int2 size, int* textureRed, int* textureGreen, int
     // REQUIRES: texture to be the size of the square
     int2 boundsX = {max(0, center.x - size.x/2), min(dims.x, center.x + size.x/2)};
     int2 boundsY = {max(0, center.y - size.y/2), min(dims.y, center.y + size.y/2)};
-    for (int i = boundsX.x; i < boundsX.y; i++){
-        for (int j = boundsY.x; j < boundsY.y; j++){
+    for (int j = boundsY.x; j < boundsY.y; j++){
+        for (int i = boundsX.x; i < boundsX.y; i++){
             red[j * dims.x + i] = textureRed[j * dims.x + i];
             green[j * dims.x + i] = textureGreen[j * dims.x + i];
             blue[j * dims.x + i] = textureBlue[j * dims.x + i];
@@ -44,8 +45,8 @@ void drawSquareT(int2 center, int2 size, int* textureRed, int* textureGreen, int
 void drawCircle(int2 center, int radius, color (*colorFunc)(int2 pos), color* outputRGB){
     int2 boundsX = {max(0, center.x - radius), min(dims.x, center.x + radius)};
     int2 boundsY = {max(0, center.y - radius), min(dims.y, center.y + radius)};
-    for (int i = boundsX.x; i < boundsX.y; i++){
-        for (int j = boundsY.x; j < boundsY.y; j++){
+    for (int j = boundsY.x; j < boundsY.y; j++){
+        for (int i = boundsX.x; i < boundsX.y; i++){
             if ((int)dist({i, j}, center) <= radius){
                 outputRGB[j * dims.x + i] = colorFunc({i, j});
             }
@@ -58,8 +59,8 @@ void drawCircleT(int2 center, int radius, color* texture, color* outputRGB){
     // REQUIRES: texture to be the size of the square with inscribed circle
     int2 boundsX = {max(0, center.x - radius), min(dims.x, center.x + radius)};
     int2 boundsY = {max(0, center.y - radius), min(dims.y, center.y + radius)};
-    for (int i = boundsX.x; i < boundsX.y; i++){
-        for (int j = boundsY.x; j < boundsY.y; j++){
+    for (int j = boundsY.x; j < boundsY.y; j++){
+        for (int i = boundsX.x; i < boundsX.y; i++){
             if ((int)dist({i, j}, center) <= radius){
                 outputRGB[j * dims.x + i] = texture[j * dims.x + i];
             }
@@ -70,8 +71,8 @@ void drawCircleT(int2 center, int radius, color* texture, color* outputRGB){
 void drawSphere(int2 center, int radius, color (*sphereMapping)(int rad, int2 pos, color* noiseTexture, int2 texSize), color* noiseTexture, int2 texSize, color* outputRGB){
     int2 boundsX = {max(0, center.x - radius), min(dims.x, center.x + radius)};
     int2 boundsY = {max(0, center.y - radius), min(dims.y, center.y + radius)};
-    for (int i = boundsX.x; i < boundsX.y; i++){
-        for (int j = boundsY.x; j < boundsY.y; j++){
+    for (int j = boundsY.x; j < boundsY.y; j++){
+        for (int i = boundsX.x; i < boundsX.y; i++){
             if ((int)dist({i, j}, center) <= radius){
                 outputRGB[j * dims.x + i] = sphereMapping(radius, {(i-center.x), (j-center.y)}, noiseTexture, texSize);
             }
@@ -143,7 +144,7 @@ color lightMapping(int r, int2 pos, color* noiseTexture, int2 texSize){
     return {val, val, val};
 }
 
-int main(){
+int graphicsMain(void){
     
     //color* img = loadImgFromPng("output_image1.png");
     //std::cout << "loaded image: " << (int)img[0].r << ", " << (int)img[0].g << ", " << (int)img[0].b << std::endl;
@@ -244,7 +245,21 @@ int main(){
     return 0;
 }
 
+int timeFunc(int (*timed_func)(void)){
+   auto start = std::chrono::high_resolution_clock::now();
 
+   timed_func();
+
+   auto end = std::chrono::high_resolution_clock::now();
+
+   return (end - start).count(); 
+}
+
+int main(){
+    int time = timeFunc(graphicsMain);
+
+    std::cout << "Time to run: " << time/1000 << " milliseconds" << std::endl;
+}
 
 // TODO:
 // make a discrete convolution function

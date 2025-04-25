@@ -80,7 +80,7 @@ unsigned int readBits(unsigned char* bytes, int& bitIdx, int numBits, int byteSi
     return bits;
 }
 
-Tree* genHuffmanCodes(int* codeLengths, int length){ // requires code lengths to be alphabet size
+Tree* genHuffmanCodes(int* codeLengths, const int length){ // requires code lengths to be alphabet size
     int huffmanCodes[length];
 
     int bl_count[MAX_BITS+1] = {0};

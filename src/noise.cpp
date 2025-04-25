@@ -114,13 +114,13 @@ unsigned char* Noise::genWorley(int layers, int tileSize, int2 frequency, double
             bounds.y = weights[i];
         }
     }
-    #ifdef DEBUG
+#ifdef DEBUG
     std::cout << "got to norm" << std::endl;
-    #endif
+#endif
 
     // loop through all the pixels and normalize them
-    for (int i = 0; i < dims.x; i++){
-        for (int j = 0; j < dims.y; j++){
+    for (int j = 0; j < dims.y; j++){
+        for (int i = 0; i < dims.x; i++){
             // set the noise to the normalized value of the tile (and tile it to the dims size)
             noise[j * dims.x + i] = linearBlend(weights[(j%tileSize) * tileSize + i%tileSize], {bounds.x, bounds.y}, {255*reversed, 255-255*reversed});
         }
@@ -250,8 +250,8 @@ unsigned char* Noise::worleyNoise(int2 dims, int frequency){
     int cellSearchDims = (frequency > 1)?2:1;
 
     // foreach pixel in a single tile
-    for (int i = 0; i < dims.x; i++){
-        for (int j = 0; j < dims.y; j++){
+    for (int j = 0; j < dims.y; j++){
+        for (int i = 0; i < dims.x; i++){
             // find the closest point in the grid
             // linearly interpolate using that distance and max (0, 255)
             for (int celli = -cellSearchDims; celli <= cellSearchDims; celli++){
@@ -367,8 +367,8 @@ unsigned char* Noise::gridTransform(unsigned char* domain, int multiplier){
 
     unsigned char* gridImg = new unsigned char[dimensions.x * dimensions.y];
 
-    for(int l = 0; l < dimensions.x; l++){
-        for(int k = 0; k < dimensions.y; k++){
+    for(int k = 0; k < dimensions.y; k++){
+        for(int l = 0; l < dimensions.x; l++){
             int i = mappedPos[l + k*dimensions.x].x;
             int j = mappedPos[l + k*dimensions.x].y;
             gridImg[l + k*dimensions.x] = (cos((i)/(pi*10))*cos((j)/(pi*10)) >= 0) ? 255 : 0;
