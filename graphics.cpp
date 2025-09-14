@@ -1,20 +1,21 @@
 #include <iostream>
-#include <fstream>
-#include <vector>
 #include <algorithm>
-#include <sstream>
 #include <chrono>
+#include <vector>
 
 #include "src/math.h"
 #include "src/vectors.h"
 #include "src/noise.h"
 #include "src/error.h"
+#include "src/readPNG/include/readPNG.h"
 #include "src/image.h"
+
 
 using namespace std;
 
 // Dimensions of the image
-constexpr int2 dims = {3024, 1964};
+// constexpr int2 dims = {3024, 1964};
+int2 dims = {3024, 1964};
 
 // DRAW STUFF
 void drawSquare(int2 corner, int2 size, int3 color, int* red, int* green, int* blue){
@@ -146,66 +147,68 @@ color lightMapping(int r, int2 pos, color* noiseTexture, int2 texSize){
 
 int graphicsMain(void){
     
-    //color* img = loadImgFromPng("output_image1.png");
-    //std::cout << "loaded image: " << (int)img[0].r << ", " << (int)img[0].g << ", " << (int)img[0].b << std::endl;
+    // color* img = loadImgFromPng("output_image.png");
+    std::vector<color> img = loadImgFromPng("output_image1.png", dims);
+    if(!img.size()){
+        ERROR("image read failed");
+        return 1;
+    }
+    std::cout << "loaded image: " << (int)img[0].r << ", " << (int)img[0].g << ", " << (int)img[0].b << std::endl;
 
     // create arrays for each color channel
     color* rgb = new color[dims.x * dims.y];
 
-#if 0
+#if 1
     for (int i = 0; i < dims.x * dims.y; i++){
-        red[i] = img[i].r;
-        green[i] = img[i].g;
-        blue[i] = img[i].b;
+        rgb[i].r = img[i].r;
+        rgb[i].g = img[i].g;
+        rgb[i].b = img[i].b;
     }
 
-    delete[] img;
-    #endif
+#endif
 
-    #if 1
+    #if 0
     // create the object to create noise
     Noise noise(dims);
 
 /* ---------CREATE TEXTURE LAYERS--------- */
     // perlin texture layer
-    //unsigned char* perlinNoise = noise.genPerlin(5, {10, 5}, noiseWeightCalc, false);
+    unsigned char* perlinNoise = noise.genPerlin(5, {10, 5}, noiseWeightCalc, false);
     //unsigned char* perlinNoise = noise.genPerlin(3, {50, 25}, noiseWeightCalc, false);
-    //unsigned char* perlinNoise3 = noise.genPerlin(1, {30, 15}, noiseWeightCalc, false);
+    // unsigned char* perlinNoise3 = noise.genPerlin(1, {500, 500}, noiseWeightCalc, false);
      //worley Noise layer
-    //unsigned char* worleyNoise = noise.genWorley(2, 2048, {4, 4}, worleyWeightCalc, false);
+    // unsigned char* worleyNoise = noise.genWorley(1, 2048, {4, 4}, worleyWeightCalc, false);
     //noise.genCells(1600, 6, 0, 0);
     
 /* ---------ADD TEXTURES TO IMAGE (MASKING)--------- */
     // add the perlin noise to the image by linearly interpolating between the two blue gradients based on the perlin noise
-    unsigned char* hm = new unsigned char[dims.x * dims.y];
-    for(int i = 0; i<dims.x; i++){
-        for(int j = 0; j<dims.y; j++){
-            hm[i + j*dims.x] = pow(max((int) 0, (int)(800*800 - pow(i - dims.x/2, 2) - pow(j - dims.y/2, 2))) + 1, 0.5);
-        }
-    }
-    unsigned char* grid = noise.gridTransform(hm, 6);
+    // unsigned char* hm = new unsigned char[dims.x * dims.y];
+    // for(int i = 0; i<dims.x; i++){
+    //     for(int j = 0; j<dims.y; j++){
+    //         hm[i + j*dims.x] = pow(max((int) 0, (int)(800*800 - pow(i - dims.x/2, 2) - pow(j - dims.y/2, 2))) + 1, 0.5);
+    //     }
+    // }
+    // unsigned char* grid = noise.gridTransform(hm, 6);
     //color* temp = new color[dims.x * dims.y];
 
-    /*for(int i = 0; i < 100; i++){
-        for(int j = 0; j < 100; j++){
-            //unsigned char val = (127.5*abs(sin((i)/(pi*5))+cos((j)/(pi*5))) + 127.5);
-            unsigned char val = perlinNoise[i*100 + j];//(cos((i)/(pi*10))*cos((j)/(pi*10)) >= 0) ? 255 : 0;
-            temp[100 * i + j] = {val, val, val};
-            ASSERT(temp[100 * i + j].r == val && temp[100 * i + j].g == val && temp[100 * i + j].b == val);
-        }
-    }*/
+    // for(int i = 0; i < 100; i++){
+    //     for(int j = 0; j < 100; j++){
+    //         //unsigned char val = (127.5*abs(sin((i)/(pi*5))+cos((j)/(pi*5))) + 127.5);
+    //         unsigned char val = perlinNoise[i*100 + j];//(cos((i)/(pi*10))*cos((j)/(pi*10)) >= 0) ? 255 : 0;
+    //         temp[100 * i + j] = {val, val, val};
+    //         ASSERT(temp[100 * i + j].r == val && temp[100 * i + j].g == val && temp[100 * i + j].b == val);
+    //     }
+    // }
 
-    float size = 12.625;
     for (int i = 0; i < dims.x*dims.y; i++){
-        unsigned char val = grid[i];//worleyNoise[i];//
+        unsigned char val = perlinNoise[i];
         rgb[i] = {val, val, val}; //{worleyNoise[i], worleyNoise[i], worleyNoise[i]};
-        
     }
 
     //delete[] perlinNoise2;
     //delete[] perlinNoise;
-    //delete[] perlinNoise3;
-    //delete[] worleyNoise;
+    // delete[] perlinNoise3;
+    delete[] perlinNoise;
 
 
 /* ---------DRAW STUFF--------- */

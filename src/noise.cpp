@@ -1,5 +1,6 @@
 #include "noise.h"
 #include "math.h"
+#include <iostream>
 
 #define MAX_COEFF (pow(2, 0.5))
 //#define DEBUG
@@ -91,7 +92,7 @@ unsigned char* Noise::genWorley(int layers, int tileSize, int2 frequency, double
         if (currentFrequency == 0){ currentFrequency = 1; }
         tempWeights = worleyNoise({tileSize, tileSize}, currentFrequency);
 
-        // add the worley noise to the weights
+        // add the worley noise to the weight
         for(int j = 0; j < tileSize * tileSize; j++){
             if (i == layers-1) {
                 weights[j] += int(tempWeights[j] * weightCalc(layers, i));
@@ -234,6 +235,7 @@ unsigned char* Noise::worleyNoise(int2 dims, int frequency){
 
     // create a freq x freq grid to store random points 
     int2* grid = new int2[frequency * frequency];
+    float* gridCoeff = new float[frequency * frequency];
 
     // variable for cellsize
     int2 cellsize = {dims.x / frequency, dims.y / frequency};
@@ -241,11 +243,13 @@ unsigned char* Noise::worleyNoise(int2 dims, int frequency){
     // populate the grid
     for (int i = 0; i < frequency * frequency; i++){
         grid[i] = {rand() % (cellsize.x), rand() % (cellsize.y)};
+        float rand_off = genHash({100, 105}, {(float)i, (float)i}).x;
+        gridCoeff[i] = rand_off;
     }
 
     // some variables to be declared 
     int2 distVector;
-    int distance, closestDist = -1;
+    float distance, closestDist = -1;
     int2 currentCell;
     int cellSearchDims = (frequency > 1)?2:1;
 
@@ -274,10 +278,13 @@ unsigned char* Noise::worleyNoise(int2 dims, int frequency){
                     distVector = {cellsize.x * celli + grid[currentCell.x + (currentCell.y) * frequency].x - (i % cellsize.x),\
                                   cellsize.y * cellj + grid[currentCell.x + (currentCell.y) * frequency].y - (j % cellsize.y)};
 
-                    //distVector = {grid[currentCell.x + (currentCell.y * frequency)].x - i + cellsize.x * currentCell.x,\
-                        grid[currentCell.x + (currentCell.y * frequency)].y - j + cellsize.y * currentCell.y};
                     // calculate the closest distance
-                    distance = pow(pow(distVector.x, 2) + pow(distVector.y, 2), 0.5);
+                    if((currentCell.x + (currentCell.y) * frequency) >= frequency * frequency){
+                        std::cerr << "noise.cpp: worley noise: gridCoeff out of bounds" << std::endl;
+                    }
+
+                    distance = gridCoeff[currentCell.x + (currentCell.y) * frequency] * pow(pow(distVector.x, 2) + pow(distVector.y, 2), 0.5);
+                    // distance = pow(pow(distVector.x, 2) + pow(distVector.y, 2), 0.5);
                     if (distance < closestDist || closestDist < 0) {
                         closestDist = distance;
                     }
@@ -285,13 +292,15 @@ unsigned char* Noise::worleyNoise(int2 dims, int frequency){
             }
 
             // set the pixel value
-            noise[j * dims.y + i] = flinearBlend(closestDist, {0, (float)MAX_COEFF*cellsize.x}, {0, 255});
+            // noise[j * dims.y + i] = cubicBlend(closestDist, {0, (float)MAX_COEFF*cellsize.x}, {0, 255});
+            noise[j * dims.y + i] = cubicBlend(closestDist, {0, 105}, {0, 255});
 
             closestDist = -1;
         }
     }
 
     delete[] grid;
+    delete[] gridCoeff;
 
     return noise;
 }

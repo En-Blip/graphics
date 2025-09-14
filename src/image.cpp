@@ -1,6 +1,12 @@
 #include "image.h"
+#include "readPNG/include/safeRead.h"
+#include <bitset>
+#include <ios>
+#include <iostream>
+#include <memory>
+#include <vector>
 
-void Tree::insertAtBinaryPath(int value, int binaryCode) {
+void Tree::insertAtBinaryPath(int value, int binaryCode, int codeLen) {
         if (!root) {
             root = std::make_shared<Node>(-1); // Initialize root if it doesn't exist
         }
@@ -8,7 +14,8 @@ void Tree::insertAtBinaryPath(int value, int binaryCode) {
         std::shared_ptr<Node> current = root;
         
         // We will use binary digits of binaryCode to navigate the tree
-        int mask = 1 << (findBinaryLength(binaryCode) - 1);
+        if(!codeLen) return;
+        int mask = 1 <<  (codeLen - 1);
         
         while (mask > 1) {
             if (binaryCode & mask) {  // If current bit is 1, go to the right
@@ -28,36 +35,64 @@ void Tree::insertAtBinaryPath(int value, int binaryCode) {
         // Last bit: place the value at the final position
         if (binaryCode & 1) {  // If the last bit is 1, go to the right
             if (!current->right) {
-                current->right = std::make_shared<Node>(-1); // Create final node if needed
+                current->right = std::make_shared<Node>(value); // Create final node if needed
             } else {
                 current->right->value = value;  // Replace value if node exists
             }
         } else {  // If the last bit is 0, go to the left
             if (!current->left) {
-                current->left = std::make_shared<Node>(-1); // Create final node if needed
+                current->left = std::make_shared<Node>(value); // Create final node if needed
             } else {
                 current->left->value = value;  // Replace value if node exists
             }
         }
     }
- 
-int Tree::findBinaryLength(int num) {
-    int length = 0;
-    while (num > 0) {
-        length++;
-        num >>= 1;
+
+// Recursive helper to print with indentation
+void Tree::printTree(std::shared_ptr<Node> node, const std::string& prefix, bool isLeft) {
+    if (!node) return;
+
+    // Print current node
+    std::cout << prefix;
+    std::cout << (isLeft ? "├──" : "└──" );
+    std::cout << node->value << std::endl;
+
+    // Recurse on children
+    if (node->left) {
+        printTree(node->left, prefix + (isLeft ? "│   " : "    "), true);
     }
-    return length;
+    if(node->right){
+        printTree(node->right, prefix + (isLeft ? "│   " : "    "), false);
+    }
+}
+ 
+void Tree::print(){
+    std::bitset<MAX_BITS+1> bit_seq;
+    if(root) print(root, bit_seq, 0);
 }
 
-int readInt(std::ifstream& file, unsigned short int bytes) {
-    ASSERT(file.is_open());
+void Tree::print(std::shared_ptr<Node> node, std::bitset<MAX_BITS+1>& bit_seq, uint8_t cur_depth){
+    assert(cur_depth <= MAX_BITS + 1);
 
-    int val = 0;
-    for (int i = 0; i < bytes; ++i) {
-        val = (val << 8) | file.get();
+    if(!node->left && !node->right){
+        for(int i = cur_depth; i < MAX_BITS+1; i++) bit_seq.reset(i);
+        bit_seq.set(cur_depth);
+        disp(bit_seq);
+        disp(node->value);
+        std::cout << "\n" << std::endl;
+        return;
     }
-    return val;
+
+    if(node->left){
+        bit_seq.reset(cur_depth);
+        print(node->left, bit_seq, cur_depth+1);
+    }    
+    if(node->right){
+        bit_seq.set(cur_depth);
+        print(node->right, bit_seq, cur_depth+1);
+    }
+
+
 }
 
 int getBitRange(unsigned char* bytes, int bitStart, int bitEnd, int byteSize) {
@@ -80,20 +115,22 @@ unsigned int readBits(unsigned char* bytes, int& bitIdx, int numBits, int byteSi
     return bits;
 }
 
-Tree* genHuffmanCodes(int* codeLengths, const int length){ // requires code lengths to be alphabet size
-    int huffmanCodes[length];
+Tree* genHuffmanCodes(int* codeLengths, int length){ // requires code lengths to be alphabet size
+    ERROR("refactor this function, this causes a memory leak in the way we're using it atm");
+    std::vector<int> huffmanCodes = std::vector<int>(length, 0);
 
     int bl_count[MAX_BITS+1] = {0};
     int next_code[MAX_BITS+1] = {0};
 
     // count the number of codes of each length
     for (int i = 0; i < length; ++i) {
+        ASSERT(codeLengths[i] <= MAX_BITS);
         bl_count[codeLengths[i]]++;
     }
 
     // find the numerical value of the smallest code for each code length
     int code = 0;
-    bl_count[0] = 0;
+    // bl_count[0] = 0; // already 0
     for (int bits = 1; bits <= MAX_BITS; bits++) {
         code = (code + bl_count[bits-1]) << 1;
         next_code[bits] = code;
@@ -111,10 +148,12 @@ Tree* genHuffmanCodes(int* codeLengths, const int length){ // requires code leng
     }
     Tree* tree = new Tree();
 
+
     // generate a tree based on the codes
     for (int i = 0; i < length; ++i) {
         if (huffmanCodes[i] != -1) {
-            tree->insertAtBinaryPath(i, huffmanCodes[i]);
+            // std::cout << i << " " << std::bitset<8>(huffmanCodes[i]) << " " << codeLengths[i] << std::endl;
+            tree->insertAtBinaryPath(i, huffmanCodes[i], codeLengths[i]);
         }
     }
     return tree;
@@ -149,7 +188,7 @@ void writeImgToCSV(const int* data, const std::string& filename, const int2 dime
  * @param filename The filename to load
  * @return The image data in a color array
  */
-color* loadImgFromPng(const std::string& filename) {
+color* loadImgFromPng1(const std::string& filename) {
     // load image and return the first eight bytes
 
     // open file
@@ -160,9 +199,9 @@ color* loadImgFromPng(const std::string& filename) {
     }
 
     // read header
-    char* header = new char[8];
+    std::unique_ptr<char[]> header = std::make_unique<char[]>(8);
     char PNGheader[8] = { -119, 80, 78, 71, 13, 10, 26, 10 }; // -119 is 137 as a char
-    file.read(header, 8);
+    file.read(header.get(), 8);
     for (int i = 0; i < 8; ++i) {
         if (header[i] != PNGheader[i]) {
             std::cout << header[i] << " != " << PNGheader[i] << std::endl;
@@ -170,8 +209,6 @@ color* loadImgFromPng(const std::string& filename) {
             return nullptr;
         }
     }
-    delete[] header;
-    
 
     // find IHDR chunk
     // read the length bytes

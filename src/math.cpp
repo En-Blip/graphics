@@ -11,6 +11,8 @@ float2 genHash(int2 bounds, float2 seed){
 
     v.x = v.x * bounds.x/2 + bounds.x/2;
     v.y = v.y * bounds.y/2 + bounds.y/2;
+    // v.x = (v.x + 1) * bounds.x/2 + bounds.x/2;
+    // v.y = (v.y + 1) * bounds.y/2 + bounds.y/2;
 
     return v;
 }
@@ -65,6 +67,15 @@ float cubicBlend(float input, float2 inputBounds, float2 outputBounds){
     return (outputBounds.y-outputBounds.x) * (-2*pow((input - inputBounds.x) / (inputBounds.y - inputBounds.x), 3) + 3 * pow((input - inputBounds.x) / (inputBounds.y - inputBounds.x), 2)) + outputBounds.x;
 }
 
+// template <T>
+// T dist(T A1, T A2){
+//
+// }
+
+double dist(double2 A1, double2 A2){
+    return sqrt((A1.x - A2.x)*(A1.x - A2.x) + (A1.y - A2.y)*(A1.y - A2.y));
+}
+
 float dist(int2 A1, int2 A2){
     return sqrt((A1.x - A2.x)*(A1.x - A2.x) + (A1.y - A2.y)*(A1.y - A2.y));
 }
@@ -75,6 +86,10 @@ float dist(int3 A1, int3 A2){
 
 int max (int a, int b){
     return a > b ? a : b;
+}
+
+int min (int a, int b){
+    return a < b ? a : b;
 }
 
 double max (double a, double b){

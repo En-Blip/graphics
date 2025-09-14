@@ -1,11 +1,24 @@
 #!/bin/bash
 
+SOURCE_PATHS=( 
+    src/noise.cpp 
+    src/math.cpp 
+    src/image.cpp 
+    src/readPNG/src/huffmanTree.cpp
+    src/readPNG/src/readPNG.cpp 
+    src/readPNG/src/safeRead.cpp 
+    src/readPNG/src/datastream.cpp 
+)
+
+INCLUDE_DIRS=(
+
+)
+
 # Compile and run C++ program
 echo "Compiling and running C++ program..."
-clang++ -std=c++17 graphics.cpp src/noise.cpp src/math.cpp src/image.cpp -o graphicsComp 
+# clang++ -std=c++20 "${SOURCE_PATHS[@]}" -O3 -o graphicsComp
+clang++ -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer -std=c++23 graphics.cpp "${SOURCE_PATHS[@]}" -o graphicsComp
 ./graphicsComp
-
-rm graphicsComp
 
 # Check if the C++ program ran successfully
 if [ $? -eq 0 ]; then
@@ -25,3 +38,5 @@ if [ $? -eq 0 ]; then
 else
     echo "Error: C++ program execution failed."
 fi
+
+rm graphicsComp
