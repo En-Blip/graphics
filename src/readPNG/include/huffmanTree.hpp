@@ -1,5 +1,6 @@
 #pragma once
 #include "datastream.hpp"
+#include <vector>
 
 constexpr uint8_t MAX_BITS = 9;
 
@@ -12,6 +13,14 @@ class Node{
         Node(int val):value(val), left(nullptr), right(nullptr){}
 };
 
+struct codeType {
+    uint16_t minValue; // the numerical smallest code for this code length
+    std::vector<uint16_t> values; // the values corresponding to each code
+    uint16_t operator[](uint16_t idx){
+        return values.at(idx);
+    }
+};
+
 class huffmanTree{
     public:
         huffmanTree();
@@ -19,7 +28,7 @@ class huffmanTree{
 
         void initialize(int* codeLengths, int length);
         uint16_t decode(datastream& zlib_ds, uint64_t& bit_idx);
-        void printTree(std::shared_ptr<Node> node, const std::string& prefix = "", bool isLeft = true);
+        void printTree(Node* node, const std::string& prefix = "", bool isLeft = true);
         void printTree(const std::string& prefix = "", bool isLeft = true);
 
     private:
@@ -34,4 +43,9 @@ class huffmanTree{
 
         // tree variables
         std::shared_ptr<Node> root;
+
+        std::vector<codeType> codeVals; // in inner vectors, first 
+        uint8_t min_length; // speed up first checks 
+        uint8_t max_length; // speed up failing codes
+
 };

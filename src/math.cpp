@@ -1,5 +1,22 @@
 #include "math.h"
 
+int max (int a, int b){
+    return (a > b) ? a : b;
+}
+
+double max (double a, double b){
+    return (a > b) ? a : b;
+}
+
+double min (double a, double b){
+    return (a > b) ? a : b;
+}
+
+int min (int a, int b){
+    return (a > b) ? a : b;
+}
+
+
 float2 genHash(int2 bounds, float2 seed){
     float2 M1 = {3.1251, 17.8737};
     float M2 = 43758.545312;
@@ -82,16 +99,4 @@ float dist(int2 A1, int2 A2){
 
 float dist(int3 A1, int3 A2){
     return sqrt((A1.x - A2.x)*(A1.x - A2.x) + (A1.y - A2.y)*(A1.y - A2.y) + (A1.z - A2.z)*(A1.z - A2.z));
-}
-
-int max (int a, int b){
-    return a > b ? a : b;
-}
-
-int min (int a, int b){
-    return a < b ? a : b;
-}
-
-double max (double a, double b){
-    return a > b ? a : b;
 }
