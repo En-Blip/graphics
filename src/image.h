@@ -7,30 +7,30 @@
 #include <iostream>
 
 static constexpr uint16_t ALPHABET_SIZE = 287;
-static constexpr uint8_t MAX_BITS = 9;
+static constexpr uint8_t MAX_BITS = 19; //9;
 
 class Node{
-    public:
-        int value;
-        std::shared_ptr<Node> left;
-        std::shared_ptr<Node> right;
+  public:
+    int value;
+    std::shared_ptr<Node> left;
+    std::shared_ptr<Node> right;
 
-        Node(int val):value(val), left(nullptr), right(nullptr){}
+    Node(int val):value(val), left(nullptr), right(nullptr){}
 };
 
 class Tree{
-    public:
-        Tree():root(nullptr){}
-        void insertAtBinaryPath(int value, int binaryCode, int codeLen);
-        void print();
-        void print(std::shared_ptr<Node> node, std::bitset<MAX_BITS+1>& bit_seq, \
-                uint8_t cur_depth);
-        std::shared_ptr<Node> root;
-        void printTree(std::shared_ptr<Node> node, const std::string& prefix = "", bool isLeft = true);
+  public:
+    Tree():root(nullptr){}
+    void insertAtBinaryPath(int value, int binaryCode, int codeLen);
+    void print();
+    void print(std::shared_ptr<Node> node, std::bitset<MAX_BITS+1>& bit_seq, \
+        uint8_t cur_depth);
+    std::shared_ptr<Node> root;
+    void printTree(std::shared_ptr<Node> node, const std::string& prefix = "", bool isLeft = true);
 
-    private:
-        void print(std::shared_ptr<Node>(node));
-        int findBinaryLength(int binaryCode);
+  private:
+    void print(std::shared_ptr<Node>(node));
+    int findBinaryLength(int binaryCode);
 };
 
 int getBitRange(unsigned char* bytes, int bitStart, int bitEnd, int byteSize);
